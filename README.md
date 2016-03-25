@@ -26,6 +26,6 @@ Un ejemplo de los contenidos posibles de ese archivo es el siguiente:
 
 1. En la linea de comandos (terminal) ejecutar:
 
-    ./crearcronograma.py MiCursadaSimple.txt Salida.xlsx
+    `./crearcronograma.py MiCursadaSimple.txt Salida.xlsx`
 
 El script genera entonces el archivo de salida `Salida.xlsx`.
