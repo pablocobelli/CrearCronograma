@@ -1,5 +1,3 @@
-primer cuatrimestre
-http://exactas.uba.ar/academico/display.php?estructura=2&desarrollo=1&id_caja=31&nivel_caja=1
-Teoricas:Monday,Wednesday
-Laboratorio 1:Tuesday
-Laboratorio 2:Friday
+verano
+https://exactas.uba.ar/calendario-academico/
+Teoricas:martes,jueves

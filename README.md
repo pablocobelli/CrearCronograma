@@ -16,13 +16,14 @@ academico de la FCEN, UBA.
    - los diferentes turnos de teoricas, practicas y laboratorio; especificando
      los dias de cursada (en ingles).
 
-Un ejemplo de los contenidos posibles de ese archivo es el siguiente:
+Un ejemplo de los contenidos posibles de ese archivo es el siguiente: 
+(notar los nombres de los dias en español, minusculas y con acentos cuando corresponda)
 
     primer cuatrimestre
     http://exactas.uba.ar/academico/display.php?estructura=2&desarrollo=1&id_caja=31&nivel_caja=1
-    Teoricas:Monday,Wednesday
-    Laboratorio 1:Tuesday
-    Laboratorio 2:Friday
+    Teoricas:lunes,miércoles
+    Laboratorio 1:martes
+    Laboratorio 2:viernes
 
 1. En la linea de comandos (terminal) ejecutar:
 

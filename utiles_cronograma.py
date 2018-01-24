@@ -1,3 +1,13 @@
+# Generacion automatizada de cronogramas de materias.
+# Pablo Cobelli 
+#
+# Changes:
+# Enero 2018:       modificacion para que funcione con la nueva version
+#                   del sitio de exactas; cambios menores asociados a como se
+#                   parsean las fechas de inicio y finalizacion de cursada
+# Diciembre 2016:   primera version, funcionaba correctamente con la antigua
+#                   version del sitio web de exactas.
+
 import re
 import datetime
 import xlsxwriter
@@ -5,6 +15,8 @@ import codecs
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from collections import OrderedDict
+import locale
+locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
 def parsear_datos_iniciales(archivo_de_datos_de_cursada):
     
@@ -34,7 +46,7 @@ def parsear_datos_iniciales(archivo_de_datos_de_cursada):
 
 
 def lista_de_dias_de_clase(horarios, turno, fecha_inicio, fecha_final, feriados):
-    
+   
     delta = fecha_final - fecha_inicio
 
     lista_dias = []
@@ -69,14 +81,19 @@ def lista_de_feriados(pagina_web_calendario_exactas, guardar=False):
         razon_feriado = col[1].string.strip()
         record = '%s,%s' % (fecha_feriado, razon_feriado) 
         records.append(record)
+        # reformatear y agregar el anio correcto
+        fecha_feriado = datetime.datetime.strptime(
+            fecha_feriado,'%d de %B').date()
+        anio_actual = datetime.datetime.now().year
+        fecha_feriado = fecha_feriado.replace(year=anio_actual)
         feriados.append(fecha_feriado)
-    
+
     if guardar == True:
         fl = codecs.open('Lista_de_Feriados.txt', 'wb', 'utf8')
         line = ';'.join(records)
         fl.write(line + u'\r\n')
         fl.close()
-        
+       
     return feriados
 
 
@@ -102,7 +119,6 @@ def escribir_cronograma_excel(archivo, horarios, fecha_inicio, fecha_final, feri
     # Escribimos cada turno, despues se ordena la columna fecha
     # para tener el cronograma integrado.
     linea = 1
-
     for turno in horarios:
         contador_clase = 1
         dias_del_turno = lista_de_dias_de_clase(horarios, turno, fecha_inicio, fecha_final, feriados) 
@@ -113,7 +129,7 @@ def escribir_cronograma_excel(archivo, horarios, fecha_inicio, fecha_final, feri
             # Chequeamos si es un feriado:
             #   si lo es, lo advertimos y no numeramos la clase;
             #   de otra forma numeramos la clase
-            if dia.strftime('%d-%m-%Y') in feriados:
+            if dia in feriados:
                 worksheet.write(linea, 2, "Feriado")
             else:
                 worksheet.write(linea, 0, turno + " " + '{0:02d}'.format(contador_clase))
@@ -127,14 +143,17 @@ def determinar_lapso_cursada(pagina, cursada):
     contents = urlopen(pagina).read()
     soup = BeautifulSoup(contents, 'lxml')
 
-    inis = soup.body.findAll(text=re.compile('Fecha Inicio:'))
-    fins = soup.body.findAll(text=re.compile('Fecha Fin:'))
+    # modificacion 24 enero 2018
+    # porque la FCEN cambio su pagina web completamente
+    lapsos_de_cursada = []
+    parrafos = soup.body.find_all('p')
+    for item in parrafos:
+        if item.text.find('Cursada') != -1:
+            lapsos_de_cursada.append(item.text.replace('Cursada:','').replace(' al ','-').replace(' a ','-').split('-'))
 
-    inis = [inis[i] for i in [0,2,5]]
-    fins = [fins[i] for i in [0,2,5]]
-
-    inis = [texto.split(': ')[1] for texto in inis]
-    fins = [texto.split(': ')[1] for texto in fins]
+    # En Fisica, nos interesan el verano, el primer cuatrimestre, y el segundo
+    # cuatrimestre, que tienen indices 0, 1 y 4, el resto son bimestres
+    lapsos_de_cursada = list(lapsos_de_cursada[i] for i in [0, 1, 4])
 
     if cursada.strip() in ['verano', 'Verano']:
         indice = 0
@@ -145,12 +164,17 @@ def determinar_lapso_cursada(pagina, cursada):
             'Segundo Cuatrimestre', 'segundo cuatrimestre']:
         indice = 2
 
-    fecha_inicio, fecha_final = inis[indice], fins[indice]
+    fecha_inicio, fecha_final = lapsos_de_cursada[indice][0].strip(), lapsos_de_cursada[indice][1].strip()
     
     fecha_inicio = datetime.datetime.strptime(
-            fecha_inicio,'%d-%m-%Y').date()
+            fecha_inicio,'%A %d de %B').date()
     fecha_final = datetime.datetime.strptime(
-            fecha_final,'%d-%m-%Y').date()
+            fecha_final,'%A %d de %B').date()
+
+    anio_actual = datetime.datetime.now().year
+
+    fecha_inicio = fecha_inicio.replace(year=anio_actual)
+    fecha_final  = fecha_final.replace(year=anio_actual)
 
     return fecha_inicio, fecha_final
 
